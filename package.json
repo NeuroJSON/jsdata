@@ -1,0 +1,21 @@
+{
+  "name": "jdata",
+  "version": "0.3",
+  "description": "JData JavaScript library",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fangq/jsdata.git"
+  },
+  "author": "Qianqian Fang <q.fang at neu.edu>",
+  "license": "BSD-3",
+  "bugs": {
+    "url": "https://github.com/fangq/jsdata/issues"
+  },
+  "homepage": "https://openjdata.org/jsdata/"
+}
