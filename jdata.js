@@ -89,8 +89,8 @@ class jdata{
                 return "_NaN_";
             }
         }else if(obj instanceof Array){
-            obj.forEach(function(e){
-                e=this._encode(e);
+            obj.forEach(function(e,idx,orig){
+                orig[idx]=this._encode(e);
             }.bind(this));
             newobj=obj;
         }else if(this._istypedarray(obj)){
@@ -115,7 +115,7 @@ class jdata{
                 newobj._ArrayZipSize_=[1, obj.size];
                 newobj._ArrayZipData_=this.zip(obj.selection.data.buffer,this.opt.compression);
             }else{
-                newobj._ArrayData_=obj.tolist();
+                newobj._ArrayData_=obj.flatten().tolist();
             }
         }else if(obj instanceof Map){
             newobj={_MapData_:[]};
