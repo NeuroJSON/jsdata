@@ -133,8 +133,8 @@ class jdata{
     _decode(obj){
         let newobj=obj;
         if(obj instanceof Array){
-            obj.forEach(function(e){
-                e=this._decode(e);
+            obj.forEach(function(e,idx,orig){
+                orig[idx]=this._decode(e);
             }.bind(this));
             newobj=obj;
         }else if(typeof obj == 'object' && obj !== null){
