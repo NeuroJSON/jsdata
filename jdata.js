@@ -1,22 +1,38 @@
 /********************************************************************************
      JData Endoer and Decoder for JavaScript
-     
+     (for JData Specification Draft 2)
+
      Author: Qianqian Fang <q.fang at neu.edu>
      URL: http://github.com/fangq/jsdata
-     
+     Live Demo: https://jsfiddle.net/fangq/7vLxjwa6/
 ********************************************************************************/
 
 class jdata{
     
-    constructor(data={}, options = {}) {
+    constructor(data = {}, options = {}) {
       this.opt  = options;
       this.data = data;
+      this.const={_Inf_:Infinity,_NaN_:NaN};
+      this.typedfun={
+          "Float32Array":null,"Float64Array":null,
+          "Int8Array":null,  "Uint8Array":null,
+          "Int16Array":null, "Uint16Array":null,
+          "Int32Array":null, "Uint32Array":null,
+          "BigInt64Array":null, "BigUint64Array":null
+        };
       this._zipper = (typeof pako !== 'undefined'
         ? pako
         : require('pako'));
       this._nj = (typeof nj !== 'undefined'
         ? nj
         : require('numjs'));
+      this._nj.NdArray.prototype.toJSON = function(){
+            return JSON.stringify(this.tolist(),function(k,v){
+            if (typeof v === 'bigint')
+                return v.toString();
+            return v;
+           });
+        };
     }
     
     encode(){
@@ -38,21 +54,19 @@ class jdata{
     }
     
     zip(buf, method){
-        let str=[].reduce.call(new Uint8Array(buf),function(p,c){
-            return p+String.fromCharCode(c)},'');
+        if(method!=='zlib' || method!=='gzip')
+            method='zlib';
         if(method==='zlib')
-            return btoa(this._zipper.deflate(str, { to: 'string' }));
+            return btoa(this._zipper.deflate(new Uint8Array(buf), { to: 'string' }));
         else if(method==='gzip')
-            return btoa(this._zipper.gzip(str, { to: 'string' }));
-        else
-            throw "compression method not supported";
+            return btoa(this._zipper.gzip(new Uint8Array(buf), { to: 'string' }));
     }
     
     unzip(str, method){
         if(method==='zlib')
-            return this._zipper.inflate(str, { to: 'string' });
+            return this._zipper.inflate(str);
         else if(method==='gzip')
-            return this._zipper.ungzip(str, { to: 'string' });
+            return this._zipper.ungzip(str);
         else
             throw "compression method not supported";
     }
@@ -67,7 +81,9 @@ class jdata{
     }
     
     _exportfilter(k,v){
-        if(v instanceof Array){
+        if (typeof v === 'bigint'){
+            return v.toString();
+        }else if(v instanceof Array){
           return JSON.stringify(v);
         }else if (this._istypedarray(v)){
             return Array.apply([], v);
@@ -95,17 +111,26 @@ class jdata{
             newobj=obj;
         }else if(this._istypedarray(obj)){
             let dtype=Object.prototype.toString.call(obj);
-            dtype=dtype.replace(/\[object /,'')
+            if(dtype=='[object ArrayBuffer]'){
+                obj=new Uint8Array(obj);
+                dtype=Object.prototype.toString.call(obj);
+            }
+            dtype=dtype.replace(/\[object /,'').replace(/^Big/,'')
                   .replace(/Array\]/,'').replace(/Clamped/,'');
             dtype=dtype.replace(/Float32/,'single').replace(/Float64/,'double');
             newobj={_ArrayType_: dtype.toLowerCase() ,_ArraySize_:obj.length};
-            if(this.opt!==undefined && this.opt.hasOwnProperty('compression')){
-                newobj._ArrayZipType_=this.opt.compression;
+            if((dtype == 'Int64' || dtype=='Uint64') || this.opt!==undefined && this.opt.hasOwnProperty('compression')){
+                if(this.opt.compression === undefined)
+                    newobj._ArrayZipType_='zlib';
+                else
+                		newobj._ArrayZipType_=this.opt.compression;
                 newobj._ArrayZipSize_=obj.length;
-                newobj._ArrayZipData_=this.zip(obj.buffer,this.opt.compression);
+                newobj._ArrayZipData_=this.zip(obj.buffer,newobj._ArrayZipType_);
             }else{
                 newobj._ArrayData_=Array.from(obj);
             }
+        }else if (typeof obj === 'bigint'){
+            newobj=this._encode(BigInt64Array.from([obj]));
         }else if(obj instanceof this._nj.NdArray){
             let dtype=obj.dtype;
             dtype=dtype.replace(/float32/,'single').replace(/float64/,'double');
@@ -137,16 +162,28 @@ class jdata{
                 orig[idx]=this._decode(e);
             }.bind(this));
             newobj=obj;
+        }else if( (typeof obj == 'string') && obj.length<=6 && obj.slice(-1)=='_'){
+            if(obj =='_Inf_')
+                newobj=Infinity;
+            else if(obj=='-_Inf_')
+                newobj=-Infinity;
+            else if(obj=='_NaN_')
+                newobj=NaN;
         }else if(typeof obj == 'object' && obj !== null){
             if(obj.hasOwnProperty('_ArrayType_')){
                 let type=obj._ArrayType_;
                 let data;
                 type=type.replace(/single/,'float32').replace(/double/,'float64');
                 let typename=type.charAt(0).toUpperCase() + type.substring(1) + "Array";
+                if(type=='int64' || type=='uint64')
+                     typename='Big'+typename;
                 if(obj.hasOwnProperty('_ArrayZipData_')){
                      data=this.unzip(atob(obj._ArrayZipData_),obj._ArrayZipType_);
-                     data=Uint8Array.from(data, c => c.charCodeAt(0));
-                     
+                     data=Uint8Array.from(data);
+                     if(this.typedfun[typename] == null)
+                     		this.typedfun[typename]=new Function('d', typename+'.from(d)');
+
+                     let typecast=this.typedfun[typename];
                      data=eval("new "+typename+"(data.buffer)");
                      data=this._nj.array(data,type).reshape(obj._ArraySize_);
                 }else if(obj.hasOwnProperty('_ArrayData_')){
@@ -157,8 +194,11 @@ class jdata{
             }else if(obj.hasOwnProperty('_MapData_') && Array.isArray(obj._MapData_)){
                 newobj=new Map();
                 obj._MapData_.forEach(function(e){
-                      newobj.set(e[0],e[1]);
-                });
+                      newobj.set(this._decode(e[0]),this._decode(e[1]));
+                }.bind(this));
+                return newobj;
+            }else if(obj.hasOwnProperty('_ByteStream_')){
+                newobj=new Blob(atob(obj._ByteStream_),{type: "octet/stream"});
                 return newobj;
             }else if(obj.hasOwnProperty('_TableData_') && 
                      obj._TableData_.hasOwnProperty('_TableRecords_') &&
