@@ -1,5 +1,5 @@
 /********************************************************************************
-     JData Endoer and Decoder for JavaScript
+     JData Encoder and Decoder for JavaScript
      (for JData Specification Draft 2)
 
      Author: Qianqian Fang <q.fang at neu.edu>
@@ -29,7 +29,7 @@ class jdata{
       this._nj.NdArray.prototype.toJSON = function(){
             return JSON.stringify(this.tolist(),function(k,v){
             if (typeof v === 'bigint')
-                return v.toString();
+                return '~~'+v.toString()+'~~';
             return v;
            });
         };
@@ -50,7 +50,9 @@ class jdata{
             .replace(/\"\[/g, '[')
             .replace(/\]\"/g,']')
             .replace(/\"\{/g, '{')
-            .replace(/\}\"/g,'}');
+            .replace(/\}\"/g,'}')
+            .replace(/\"~~/g, '')
+            .replace(/~~\"/g, '');
     }
     
     zip(buf, method){
@@ -181,10 +183,9 @@ class jdata{
                      data=this.unzip(atob(obj._ArrayZipData_),obj._ArrayZipType_);
                      data=Uint8Array.from(data);
                      if(this.typedfun[typename] == null)
-                     		this.typedfun[typename]=new Function('d', typename+'.from(d)');
-
+                     		this.typedfun[typename]=new Function('d', 'return new '+typename+'(d)');
                      let typecast=this.typedfun[typename];
-                     data=eval("new "+typename+"(data.buffer)");
+                     data=typecast(data.buffer);
                      data=this._nj.array(data,type).reshape(obj._ArraySize_);
                 }else if(obj.hasOwnProperty('_ArrayData_')){
                      data=obj._ArrayData_;
