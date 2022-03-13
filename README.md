@@ -1,2 +1,2 @@
-# JData JavaScrit Library
+# JData JavaScript Library
 
