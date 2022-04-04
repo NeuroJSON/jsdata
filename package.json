@@ -1,26 +1,28 @@
 {
   "name": "jdata",
-  "version": "0.3",
-  "description": "JData JavaScript library",
+  "version": "0.3.1",
+  "description": "JSData is a lightweight JData annotation encoder and decoder for JavaScript and NodeJS",
   "main": "jdata.js",
   "directories": {
     "test": "test"
   },
   "dependencies": {
-    "pako": "^1.0.0",
-    "numjs": "^0.15.0"
+    "atob": "^2.1.2",
+    "btoa": "^1.2.1",
+    "numjs": "^0.16.1",
+    "pako": "^2.0.4"
   },
   "scripts": {
     "test": "tape test/*.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/fangq/jsdata.git"
+    "url": "git+https://github.com/NeuroJSON/jsdata.git"
   },
   "author": "Qianqian Fang <q.fang at neu.edu>",
-  "license": "BSD-3",
+  "license": "BSD-3-Clause",
   "bugs": {
-    "url": "https://github.com/fangq/jsdata/issues"
+    "url": "https://github.com/NeuroJSON/jsdata/issues"
   },
-  "homepage": "https://openjdata.org/jsdata/"
+  "homepage": "https://neurojson.org/"
 }
