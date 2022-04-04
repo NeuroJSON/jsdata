@@ -1,6 +1,7 @@
-JSData is written by Qianqian Fang as part of the NeuroJData/OpenJData project.
+JSData is written by Qianqian Fang as part of the US National
+Insitute of Health (NIH) funded NeuroJData project (U24-NS124027).
 
-Qianqian is currently an Assistant Professor in the 
+Qianqian is currently an Associate Professor in the 
 Department of Bioengineering at Northeastern University.
 
 Address: Dept. of Bioengineering
@@ -9,5 +10,4 @@ Address: Dept. of Bioengineering
 URL: http://fanglab.org
 Email: <q.fang at neu.edu>
 
-OpenJData Website : http://openjdata.org
-
+NeuroJSON Homepage : http://neurojson.org

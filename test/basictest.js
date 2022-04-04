@@ -1,6 +1,11 @@
+// npm install atob btoa pako numjs
+// node ./basictest.js
+
 var pako = require("pako")
 var nj = require("numjs")
-var jd = require("../jdata.js")
+var jdata = require("../jdata.js")
+global.atob = require("atob");
+global.btoa = require("btoa");
 
 
 let data={integer:1,shortarray:[1,2,3],object:[[[1],[2],[3]],null,false]};

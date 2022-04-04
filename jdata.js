@@ -1,14 +1,14 @@
 /********************************************************************************
-     JData Encoder and Decoder for JavaScript
-     (for JData Specification Draft 2)
+     JSData - Lightweight JData Annotation Encoder and Decoder for JavaScript and NodeJS
+     (for JData Specification Draft 2 defined in http://neurojson.org/jdata/draft2)
 
      Author: Qianqian Fang <q.fang at neu.edu>
-     URL: http://github.com/fangq/jsdata
+     URL: http://github.com/NeuroJSON/jsdata
      Live Demo: https://jsfiddle.net/fangq/7vLxjwa6/
 ********************************************************************************/
 
 class jdata{
-    
+
     constructor(data = {}, options = {}) {
       this.opt  = options;
       this.data = data;
@@ -22,7 +22,7 @@ class jdata{
         };
       this._zipper = (typeof pako !== 'undefined'
         ? pako
-        : require('pako'));
+        : options.hasOwnProperty('zlib') ? require(options['zlib']) : require('pako'));
       this._nj = (typeof nj !== 'undefined'
         ? nj
         : require('numjs'));
@@ -34,17 +34,17 @@ class jdata{
            });
         };
     }
-    
+
     encode(){
         this.data=this._encode(this.data);
         return this;
     }
-    
+
     decode(){
         this.data=this._decode(this.data);
         return this;
     }
-    
+
     tojson(){
         return JSON.stringify(this.data, this._exportfilter.bind(this),'\t').replace(/\\/g, '')
             .replace(/\"\[/g, '[')
@@ -54,7 +54,7 @@ class jdata{
             .replace(/\"~~/g, '')
             .replace(/~~\"/g, '');
     }
-    
+
     zip(buf, method){
         if(method!=='zlib' || method!=='gzip')
             method='zlib';
@@ -63,25 +63,27 @@ class jdata{
         else if(method==='gzip')
             return btoa(this._zipper.gzip(new Uint8Array(buf), { to: 'string' }));
     }
-    
+
     unzip(str, method){
         if(method==='zlib')
             return this._zipper.inflate(str);
         else if(method==='gzip')
             return this._zipper.ungzip(str);
+        else if(method==='lzma')
+            return this._zipper.decompressFile(str); // must use {zlib:'lzma-purejs'} in the constructor
         else
             throw "compression method not supported";
     }
-    
+
     _istypedarray(obj){
-      return !!obj && obj.byteLength !== undefined;
+        return !!obj && obj.byteLength !== undefined;
     }
-    
+
     static _str2hex(str){
-      str = encodeURIComponent(str).split('%').join('');
-      return str.toLowerCase();
+        str = encodeURIComponent(str).split('%').join('');
+        return str.toLowerCase();
     }
-    
+
     _exportfilter(k,v){
         if (typeof v === 'bigint'){
             return v.toString();
@@ -95,7 +97,7 @@ class jdata{
             return Array.from(v.entries());
         return v;
     }
-    
+
     _encode(obj){
         let newobj=obj;
         if(typeof obj == 'number'){
@@ -125,7 +127,7 @@ class jdata{
                 if(this.opt.compression === undefined)
                     newobj._ArrayZipType_='zlib';
                 else
-                		newobj._ArrayZipType_=this.opt.compression;
+                    newobj._ArrayZipType_=this.opt.compression;
                 newobj._ArrayZipSize_=obj.length;
                 newobj._ArrayZipData_=this.zip(obj.buffer,newobj._ArrayZipType_);
             }else{
@@ -181,9 +183,9 @@ class jdata{
                      typename='Big'+typename;
                 if(obj.hasOwnProperty('_ArrayZipData_')){
                      data=this.unzip(atob(obj._ArrayZipData_),obj._ArrayZipType_);
-                     data=Uint8Array.from(data);
+                     //data=Uint8Array.from(data);
                      if(this.typedfun[typename] == null)
-                     		this.typedfun[typename]=new Function('d', 'return new '+typename+'(d)');
+                         this.typedfun[typename]=new Function('d', 'return new '+typename+'(d)');
                      let typecast=this.typedfun[typename];
                      data=typecast(data.buffer);
                      data=this._nj.array(data,type).reshape(obj._ArraySize_);
@@ -201,7 +203,7 @@ class jdata{
             }else if(obj.hasOwnProperty('_ByteStream_')){
                 newobj=new Blob(atob(obj._ByteStream_),{type: "octet/stream"});
                 return newobj;
-            }else if(obj.hasOwnProperty('_TableData_') && 
+            }else if(obj.hasOwnProperty('_TableData_') &&
                      obj._TableData_.hasOwnProperty('_TableRecords_') &&
                      obj._TableData_._TableRecords_.length){
                 newobj={};
@@ -223,3 +225,5 @@ class jdata{
         return newobj;
     }
 }
+
+module.exports = jdata;
