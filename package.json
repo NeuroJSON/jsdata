@@ -1,5 +1,5 @@
 {
-  "name": "jdata",
+  "name": "jda",
   "version": "0.3.1",
   "description": "JSData is a lightweight JData annotation encoder and decoder for JavaScript and NodeJS",
   "main": "jdata.js",
@@ -24,5 +24,25 @@
   "bugs": {
     "url": "https://github.com/NeuroJSON/jsdata/issues"
   },
-  "homepage": "https://neurojson.org/"
+  "homepage": "http://neurojson.org/",
+  "devDependencies": {},
+  "keywords": [
+    "JSON",
+    "JData",
+    "UBJSON",
+    "binary JSON",
+    "scientific data",
+    "BJData",
+    "encoder",
+    "decoder",
+    "parser",
+    "serialization",
+    "neuroimaging",
+    "mesh",
+    "JMesh",
+    "JNIfTI",
+    "JSNIRF",
+    "BJD",
+    "UBJ"
+  ]
 }
