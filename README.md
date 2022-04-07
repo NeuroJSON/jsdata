@@ -135,6 +135,8 @@ and then read/decode the binary JData file by
 var bjd = require('bjd')
 var jdata = require('jda')
 var fs = require('fs')
+global.atob = require("atob");
+global.btoa = require("btoa");
 
 var mydata = new jdata(bjd.decode(fs.readFileSync('mydata.bjd'))[0]).decode();
 console.log(mydata)
