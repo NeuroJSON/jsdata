@@ -54,6 +54,16 @@ class jdata {
         return this;
     }
 
+    base64ToBytes(base64) {
+        const binString = atob(base64);
+        return Uint8Array.from(binString, (m) => m.codePointAt(0));
+    }
+
+    bytesToBase64(bytes) {
+        const binString = String.fromCodePoint(...bytes);
+        return btoa(binString);
+    }
+
     tojson() {
         return JSON.stringify(this.data, this._exportfilter.bind(this), '\t').replace(/\\/g, '')
             .replace(/\"\[/g, '[')
@@ -69,7 +79,7 @@ class jdata {
             method = 'zlib';
         if (method === 'zlib') {
             if (this.base64)
-                return btoa(this._zipper.deflate(new Uint8Array(buf), {
+                return this.bytesToBase64(this._zipper.deflate(new Uint8Array(buf), {
                     to: 'string'
                 }));
             else
@@ -78,7 +88,7 @@ class jdata {
                 });
         } else if (method === 'gzip') {
             if (this.base64)
-                return btoa(this._zipper.gzip(new Uint8Array(buf), {
+                return this.bytesToBase64(this._zipper.gzip(new Uint8Array(buf), {
                     to: 'string'
                 }));
             else
@@ -219,7 +229,7 @@ class jdata {
                     typename = 'Big' + typename;
                 if (obj.hasOwnProperty('_ArrayZipData_')) {
                     if (this.base64)
-                        data = this.unzip(atob(obj._ArrayZipData_), obj._ArrayZipType_);
+                        data = this.unzip(this.base64ToBytes(obj._ArrayZipData_), obj._ArrayZipType_);
                     else
                         data = this.unzip(obj._ArrayZipData_, obj._ArrayZipType_);
                     //data=Uint8Array.from(data);
@@ -244,7 +254,7 @@ class jdata {
                     newobj = this._decode(obj._ByteStream_);
                 } else {
                     if (this.base64)
-                        newobj = new Blob(atob(obj._ByteStream_), {
+                        newobj = new Blob(this.base64ToBytes(obj._ByteStream_), {
                             type: "octet/stream"
                         });
                     else

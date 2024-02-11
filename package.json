@@ -10,7 +10,7 @@
     "atob": "^2.1.2",
     "btoa": "^1.2.1",
     "numjs": "^0.16.1",
-    "pako": "^2.0.4"
+    "pako": "^2.1.0"
   },
   "scripts": {
     "test": "tape test/*.js"
