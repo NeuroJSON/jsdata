@@ -13,6 +13,7 @@ class jdata{
       this.opt  = options;
       this.data = data;
       this.const={_Inf_:Infinity,_NaN_:NaN};
+      this.base64 = options.hasOwnProperty('base64') ? options.base64: true;
       this.typedfun={
           "Float32Array":null,"Float64Array":null,
           "Int8Array":null,  "Uint8Array":null,
@@ -58,10 +59,17 @@ class jdata{
     zip(buf, method){
         if(method!=='zlib' || method!=='gzip')
             method='zlib';
-        if(method==='zlib')
-            return btoa(this._zipper.deflate(new Uint8Array(buf), { to: 'string' }));
-        else if(method==='gzip')
-            return btoa(this._zipper.gzip(new Uint8Array(buf), { to: 'string' }));
+        if(method==='zlib') {
+            if(this.base64)
+                return btoa(this._zipper.deflate(new Uint8Array(buf), { to: 'string' }));
+            else
+                return this._zipper.deflate(new Uint8Array(buf), { to: 'string' });
+        } else if(method==='gzip') {
+            if(this.base64)
+                return btoa(this._zipper.gzip(new Uint8Array(buf), { to: 'string' }));
+            else
+                return this._zipper.gzip(new Uint8Array(buf), { to: 'string' });
+        }
     }
 
     unzip(str, method){
@@ -69,9 +77,13 @@ class jdata{
             return this._zipper.inflate(str);
         else if(method==='gzip')
             return this._zipper.ungzip(str);
-        else if(method==='lzma')
+        else if(method==='lzma') {
+            if(typeof LZMA !== 'undefined') { // need js-lzma (https://github.com/jcmellado/js-lzma)
+               var inStream = new LZMA.iStream(str.buffer);
+               return LZMA.decompressFile(inStream).toUint8Array();
+            }
             return this._zipper.decompressFile(str); // must use {zlib:'lzma-purejs'} in the constructor
-        else
+        } else
             throw "compression method not supported";
     }
 
@@ -182,7 +194,10 @@ class jdata{
                 if(type=='int64' || type=='uint64')
                      typename='Big'+typename;
                 if(obj.hasOwnProperty('_ArrayZipData_')){
-                     data=this.unzip(atob(obj._ArrayZipData_),obj._ArrayZipType_);
+                     if(this.base64)
+                         data=this.unzip(atob(obj._ArrayZipData_),obj._ArrayZipType_);
+                     else
+                         data=this.unzip(obj._ArrayZipData_,obj._ArrayZipType_);
                      //data=Uint8Array.from(data);
                      if(this.typedfun[typename] == null)
                          this.typedfun[typename]=new Function('d', 'return new '+typename+'(d)');
@@ -201,7 +216,14 @@ class jdata{
                 }.bind(this));
                 return newobj;
             }else if(obj.hasOwnProperty('_ByteStream_')){
-                newobj=new Blob(atob(obj._ByteStream_),{type: "octet/stream"});
+                if(obj._ByteStream_.hasOwnProperty('_ArraySize_')) {
+                      newobj = this._decode(obj._ByteStream_);
+                } else {
+                   if(this.base64)
+                      newobj=new Blob(atob(obj._ByteStream_),{type: "octet/stream"});
+                   else
+                      newobj=new Blob(obj._ByteStream_,{type: "octet/stream"});
+                }
                 return newobj;
             }else if(obj.hasOwnProperty('_TableData_') &&
                      obj._TableData_.hasOwnProperty('_TableRecords_') &&
@@ -226,4 +248,6 @@ class jdata{
     }
 }
 
-module.exports = jdata;
+try {
+    module.exports = jdata;
+} catch (e) {}

@@ -1,6 +1,6 @@
 {
   "name": "jda",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "JSData is a lightweight JData annotation encoder and decoder for JavaScript and NodeJS",
   "main": "jdata.js",
   "directories": {
@@ -24,7 +24,7 @@
   "bugs": {
     "url": "https://github.com/NeuroJSON/jsdata/issues"
   },
-  "homepage": "http://neurojson.org",
+  "homepage": "https://neurojson.org",
   "devDependencies": {},
   "keywords": [
     "JSON",
