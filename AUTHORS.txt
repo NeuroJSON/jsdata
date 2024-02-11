@@ -10,4 +10,4 @@ Address: Dept. of Bioengineering
 URL: http://fanglab.org
 Email: <q.fang at neu.edu>
 
-NeuroJSON Homepage : http://neurojson.org
+NeuroJSON Homepage : https://neurojson.org
